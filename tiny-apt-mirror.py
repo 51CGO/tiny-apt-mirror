@@ -1,3 +1,4 @@
+import base64
 import flask
 import requests
 import tempfile
@@ -5,27 +6,43 @@ from markupsafe import escape
 
 DEBIAN_DISTS_URL="https://miroir.univ-lorraine.fr/debian/dists"
 
+DICT_ENDPOINTS = {
+    "debian": "https://miroir.univ-lorraine.fr/debian",
+}
+
 app = flask.Flask(__name__)
 
-@app.route("/")
-def hello_world():
-    return "<p>Hello, World!</p>"
+@app.route("/<path:full_path>")
+def process(full_path):
 
+    print(full_path)
 
-@app.route("/debian/dists/<path:subpath>")
-def dists(subpath):
+    for endpoint in DICT_ENDPOINTS:
 
-    print(DEBIAN_DISTS_URL + "/" + subpath)
+        if full_path.startswith(endpoint):
 
-    r = requests.get(DEBIAN_DISTS_URL + "/" + subpath)
-    r.status_code
+            base_url = DICT_ENDPOINTS[endpoint]
 
-    fd = tempfile.TemporaryFile()
-    for chunk in r.iter_content(chunk_size=128):
-        fd.write(chunk)
-    fd.seek(0)
-    return fd.read()
+            print("%s => %s" % (endpoint, base_url))
 
-@app.route("/debian/pool/<path:subpath>")
-def pool(subpath):
-    return escape(subpath)
+            url_path = full_path[len(endpoint):]
+
+            print(url_path)
+
+            if url_path.startswith("/dists/") or url_path.startswith("/pool/"):
+
+                items = url_path.split("/")
+                file_name = items[-1]
+                print(file_name)
+
+                r = requests.get(base_url + url_path, stream=False)
+                #print(r.status_code)
+                #print(r.headers)
+
+                fd = open(file_name, "wb")
+                fd.write(r.content)
+                fd.close()
+
+                return flask.send_file( file_name)
+
+    return
