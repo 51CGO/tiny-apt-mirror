@@ -8,6 +8,7 @@ DEBIAN_DISTS_URL="https://miroir.univ-lorraine.fr/debian/dists"
 
 DICT_ENDPOINTS = {
     "debian": "https://miroir.univ-lorraine.fr/debian",
+    "debian-security": "http://security.debian.org/debian-security",
 }
 
 app = flask.Flask(__name__)
